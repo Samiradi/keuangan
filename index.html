@@ -3,124 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Keuangan + Export Excel</title>
+    <title>Dompet Doraemon Animasi 🔔</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
     <style>
-        body { background-color: #f8f9fa; }
-        .card-summary { transition: transform 0.2s; }
-        .card-summary:hover { transform: translateY(-5px); }
-        .inc-color { color: #198754; }
-        .exp-color { color: #dc3545; }
-        
-        /* Styles untuk Login Screen */
+        :root {
+            --dora-blue: #00a0e9;
+            --dora-red: #ea3622;
+            --dora-yellow: #fcc900;
+            --dora-white: #ffffff;
+            --dora-bg: #e0f6ff;
+        }
+
+        body { 
+            background-color: var(--dora-bg);
+            background-image: radial-gradient(#ffffff 20%, transparent 20%), radial-gradient(#ffffff 20%, transparent 20%);
+            background-position: 0 0, 20px 20px;
+            background-size: 40px 40px;
+            font-family: 'Fredoka', sans-serif;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* --- Animations Keyframes --- */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+            60% { opacity: 1; transform: scale(1.05) translateY(-5px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes slideOut {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        .tr-anim {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0; /* Awalnya invisible sebelum animasi jalan */
+        }
+
+        .tr-deleting {
+            animation: slideOut 0.5s forwards !important;
+            background-color: #ffcccc !important;
+        }
+
+        /* Styling Kartu & Komponen */
+        .card {
+            border: 3px solid var(--dora-blue);
+            border-radius: 20px;
+            box-shadow: 0 8px 0 rgba(0, 160, 233, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card-header {
+            background-color: var(--dora-blue);
+            color: white;
+            border-bottom: none;
+            border-radius: 15px 15px 0 0 !important;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .card-summary {
+            background: white;
+            border: 3px solid var(--dora-blue);
+        }
+        .card-summary:hover { transform: translateY(-5px) scale(1.02); }
+
+        .btn-primary {
+            background-color: var(--dora-blue);
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0 4px 0 #0077b3;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+        .btn-primary:active { transform: translateY(4px); box-shadow: 0 0 0 #0077b3; }
+
+        .inc-color { color: #32cd32; text-shadow: 1px 1px 0 #fff; }
+        .exp-color { color: var(--dora-red); text-shadow: 1px 1px 0 #fff; }
+        .text-primary { color: var(--dora-blue) !important; }
+
+        /* Login Screen */
         #login-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: #e9ecef;
+            background: var(--dora-blue);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            background-image: radial-gradient(circle at 50% 50%, #fff 10%, transparent 10.5%);
+            background-size: 50px 50px;
         }
-        #app-screen { display: none; } 
+        
+        .login-card {
+            background: white;
+            border-radius: 50% 50% 20px 20px;
+            border: 5px solid #333;
+        }
+
+        .login-bell {
+            width: 40px; height: 40px;
+            background: var(--dora-yellow);
+            border: 3px solid #333;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            top: -20px;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+            animation: swing 2s infinite ease-in-out;
+        }
+        @keyframes swing { 0%,100%{transform:translateX(-50%) rotate(-10deg);} 50%{transform:translateX(-50%) rotate(10deg);} }
+
+        #app-screen { display: none; }
+        
+        /* Notifikasi Toast Custom */
+        #toast-box {
+            position: fixed;
+            top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 2000;
+            display: none;
+        }
+        .dora-toast {
+            background: var(--dora-yellow);
+            color: #333;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: 3px solid #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: bounceInDown 0.5s;
+        }
     </style>
 </head>
 <body>
 
+<div id="toast-box">
+    <div class="dora-toast">
+        <span>🥞</span> <span id="toast-msg">Berhasil disimpan!</span>
+    </div>
+</div>
+
 <div id="login-screen">
-    <div class="card shadow p-4" style="width: 350px;">
-        <h3 class="text-center mb-3">🔐 Login</h3>
-        <p class="text-center text-muted small">Masukkan nama Anda untuk mengakses data keuangan pribadi Anda.</p>
+    <div class="card login-card shadow p-5 animate__animated animate__zoomIn" style="width: 380px;">
+        <div class="login-bell"></div>
+        <div class="text-center mb-2 animate__animated animate__tada animate__delay-1s" style="font-size: 50px;">🐱</div>
+        <h2 class="text-center fw-bold" style="color: var(--dora-blue)">Halo!</h2>
+        <p class="text-center text-muted small">Siapa yang mau pakai alat canggih ini?</p>
         <form id="form-login">
             <div class="mb-3">
-                <label class="form-label">Nama Pengguna</label>
-                <input type="text" id="username-input" class="form-control" placeholder="Contoh: Budi" required>
+                <input type="text" id="username-input" class="form-control text-center rounded-pill border-2" placeholder="Nama Kamu (Cth: Nobita)" required style="border-color: var(--dora-blue);">
             </div>
-            <button type="submit" class="btn btn-primary w-100">Masuk / Buat Akun</button>
+            <button type="submit" class="btn btn-primary w-100 py-2">🚪 Masuk ke Pintu Ajaib</button>
         </form>
     </div>
 </div>
 
-<div id="app-screen" class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>💰 Keuangan: <span id="user-display" class="text-primary"></span></h2>
+<div id="app-screen" class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-pill shadow-sm border border-2 border-info animate__animated animate__fadeInDown">
+        <h3 class="m-0 ms-2">🔔 Dompet <span id="user-display" class="fw-bold text-primary"></span></h3>
         <div>
-            <button onclick="downloadExcel()" class="btn btn-success me-2">
-                📥 Export Excel
-            </button>
-            <button onclick="logout()" class="btn btn-outline-danger">Keluar</button>
+            <button onclick="downloadExcel()" class="btn btn-success me-2 btn-sm rounded-pill">📝 Laporan</button>
+            <button onclick="logout()" class="btn btn-outline-danger btn-sm rounded-pill">❌ Keluar</button>
         </div>
     </div>
 
     <div class="row mb-4 text-center">
-        <div class="col-md-4">
-            <div class="card card-summary shadow-sm mb-2">
+        <div class="col-md-4 animate__animated animate__fadeInUp animate__delay-1s">
+            <div class="card card-summary mb-2">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">Total Pemasukan</h5>
-                    <h3 class="inc-color" id="total-income">Rp 0</h3>
+                    <h6 class="text-muted">💰 Kantong Masuk</h6>
+                    <h3 class="inc-color fw-bold counter" id="total-income">0</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card card-summary shadow-sm mb-2">
+        <div class="col-md-4 animate__animated animate__fadeInUp animate__delay-1s">
+            <div class="card card-summary mb-2">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">Total Pengeluaran</h5>
-                    <h3 class="exp-color" id="total-expense">Rp 0</h3>
+                    <h6 class="text-muted">💸 Kantong Keluar</h6>
+                    <h3 class="exp-color fw-bold counter" id="total-expense">0</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card card-summary shadow-sm mb-2">
+        <div class="col-md-4 animate__animated animate__fadeInUp animate__delay-1s">
+            <div class="card card-summary mb-2 bg-light">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">Saldo Saat Ini</h5>
-                    <h3 class="text-primary" id="balance">Rp 0</h3>
+                    <h6 class="text-muted">🥞 Sisa Uang Jajan</h6>
+                    <h3 class="text-primary fw-bold counter" id="balance">0</h3>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-4 mb-4">
+        <div class="col-lg-4 mb-4 animate__animated animate__fadeInLeft">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    Tambah Transaksi
+                <div class="card-header text-center">
+                    ✏️ Catat Sini
                 </div>
                 <div class="card-body">
                     <form id="form-transaksi">
-                        <div class="mb-3">
-                            <label class="form-label">Tanggal</label>
-                            <input type="date" class="form-control" id="date" required>
+                        <div class="mb-2">
+                            <label class="small text-muted">Kapan?</label>
+                            <input type="datetime-local" class="form-control rounded-3" id="date" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Jenis</label>
-                            <select class="form-select" id="type" onchange="updateCategories()">
-                                <option value="income">Pemasukan (+)</option>
-                                <option value="expense">Pengeluaran (-)</option>
+                        <div class="mb-2">
+                            <label class="small text-muted">Tipe</label>
+                            <select class="form-select rounded-3" id="type" onchange="updateCategories()">
+                                <option value="income">🔵 Pemasukan</option>
+                                <option value="expense">🔴 Pengeluaran</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Kategori</label>
-                            <select class="form-select" id="category"></select>
+                        <div class="mb-2">
+                            <label class="small text-muted">Untuk Apa?</label>
+                            <select class="form-select rounded-3" id="category"></select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="small text-muted">Catatan</label>
+                            <input type="text" class="form-control rounded-3" id="text" placeholder="Beli Dorayaki..." required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Keterangan</label>
-                            <input type="text" class="form-control" id="text" placeholder="Detail..." required>
+                            <label class="small text-muted">Jumlah (Rp)</label>
+                            <input type="number" class="form-control rounded-3 fw-bold text-end" id="amount" placeholder="0" required style="color: var(--dora-blue)">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Jumlah (Rp)</label>
-                            <input type="number" class="form-control" id="amount" placeholder="0" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan</button>
+                        <button type="submit" class="btn btn-primary w-100 shadow-sm">💾 Simpan di Kantong Ajaib</button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-8 mb-4">
+        <div class="col-lg-8 mb-4 animate__animated animate__fadeInRight">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-white">
-                    Grafik Bulanan
+                <div class="card-header text-center bg-white text-primary border-bottom-0">
+                    📊 Grafik Baling-Baling Bambu
                 </div>
                 <div class="card-body">
                     <canvas id="financeChart"></canvas>
@@ -129,17 +251,19 @@
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-white">Riwayat Transaksi</div>
+    <div class="card shadow-sm animate__animated animate__fadeInUp">
+        <div class="card-header bg-warning text-dark">
+            📜 Mesin Waktu (Riwayat)
+        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped mb-0 align-middle">
-                    <thead>
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <th>Tanggal</th>
-                            <th>Keterangan</th>
-                            <th class="text-end">Jumlah</th>
-                            <th class="text-center">Aksi</th>
+                            <th class="ps-3">Waktu</th>
+                            <th>Detail</th>
+                            <th class="text-end">Nilai</th>
+                            <th class="text-center">Hapus</th>
                         </tr>
                     </thead>
                     <tbody id="list"></tbody>
@@ -154,91 +278,9 @@
     let currentUser = null;
     let transactions = [];
     let financeChart;
+    // Menyimpan nilai terakhir untuk animasi angka
+    let lastVals = { inc: 0, exp: 0, bal: 0 }; 
 
-    // --- DOM Elements ---
-    const loginScreen = document.getElementById('login-screen');
-    const appScreen = document.getElementById('app-screen');
-    const userDisplay = document.getElementById('user-display');
-    const formLogin = document.getElementById('form-login');
-    const usernameInput = document.getElementById('username-input');
-
-    // --- Kategori Data ---
-    const categoryOptions = {
-        income: ["Gaji Utama", "Sampingan", "Bonus", "Investasi", "Lainnya"],
-        expense: ["Makan", "Transport", "Belanja", "Tagihan", "Hiburan", "Lainnya"]
-    };
-
-    // --- SISTEM LOGIN ---
-    formLogin.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const username = usernameInput.value.trim();
-        if(username) {
-            currentUser = username;
-            userDisplay.innerText = currentUser;
-            loginScreen.style.display = 'none';
-            appScreen.style.display = 'block';
-            loadUserData();
-        }
-    });
-
-    function logout() {
-        currentUser = null;
-        transactions = [];
-        loginScreen.style.display = 'flex';
-        appScreen.style.display = 'none';
-        usernameInput.value = '';
-    }
-
-    // --- MANAJEMEN DATA ---
-    function loadUserData() {
-        const storageKey = 'transactions_' + currentUser.toLowerCase(); 
-        transactions = JSON.parse(localStorage.getItem(storageKey)) || [];
-        initApp();
-    }
-
-    function updateLocalStorage() {
-        if (!currentUser) return;
-        const storageKey = 'transactions_' + currentUser.toLowerCase();
-        localStorage.setItem(storageKey, JSON.stringify(transactions));
-    }
-
-    // --- FITUR BARU: EXPORT EXCEL (CSV) ---
-    function downloadExcel() {
-        if(transactions.length === 0) {
-            alert("Belum ada data transaksi untuk diexport!");
-            return;
-        }
-
-        // 1. Buat Header CSV
-        let csvContent = "Tanggal,Jenis,Kategori,Keterangan,Jumlah\n";
-
-        // 2. Masukkan Data baris per baris
-        transactions.forEach(t => {
-            // Kita bersihkan koma di dalam teks agar tidak merusak kolom CSV
-            const cleanText = t.text.replace(/,/g, " "); 
-            const jenis = t.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
-            
-            // Format baris: Tanggal, Jenis, Kategori, Keterangan, Jumlah (angka mentah)
-            let row = `${t.date},${jenis},${t.category},${cleanText},${t.amount}`;
-            csvContent += row + "\n";
-        });
-
-        // 3. Buat file Blob dan Download
-        // \uFEFF adalah BOM untuk memastikan Excel membaca karakter dengan benar
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        // Nama file: Laporan_Budi_Tanggal.csv
-        link.setAttribute("download", `Laporan_Keuangan_${currentUser}_${new Date().toISOString().slice(0,10)}.csv`);
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    // --- LOGIKA APLIKASI KEUANGAN ---
     const listEl = document.getElementById('list');
     const balanceEl = document.getElementById('balance');
     const incomeEl = document.getElementById('total-income');
@@ -252,8 +294,119 @@
     const typeDetails = document.getElementById('type');
     const categoryDetails = document.getElementById('category');
 
-    dateDetails.valueAsDate = new Date();
+    const categoryOptions = {
+        income: ["Uang Saku", "Hadiah", "Jual Mainan", "Temu di Jalan", "Lainnya"],
+        expense: ["Dorayaki/Jajan", "Komik", "Mainan", "Transport", "Dipinjam Giant", "Lainnya"]
+    };
 
+    // --- ANIMATION HELPERS ---
+    
+    // Fungsi untuk animasi angka bergulir (Count Up)
+    function animateValue(obj, start, end, duration, prefix = "") {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Menghitung nilai saat ini
+            const currentVal = Math.floor(progress * (end - start) + start);
+            obj.innerHTML = prefix + ' ' + new Intl.NumberFormat('id-ID').format(currentVal);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Fungsi Notifikasi Toast (Melayang)
+    function showToast(message) {
+        const box = document.getElementById('toast-box');
+        const msg = document.getElementById('toast-msg');
+        msg.innerText = message;
+        box.style.display = 'block';
+        setTimeout(() => {
+            box.style.display = 'none';
+        }, 2500);
+    }
+
+    // --- UTILS ---
+    function setInputToNow() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        dateDetails.value = now.toISOString().slice(0, 16);
+    }
+
+    function formatDateTime(dateString) {
+        const options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+        return new Date(dateString).toLocaleDateString('id-ID', options);
+    }
+
+    function formatRupiahSimple(num) {
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+    }
+
+    // --- LOGIN LOGIC ---
+    document.getElementById('form-login').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username-input').value.trim();
+        if(username) {
+            currentUser = username;
+            document.getElementById('user-display').innerText = currentUser;
+            
+            document.getElementById('login-screen').classList.add('animate__animated', 'animate__fadeOutUp');
+            setTimeout(() => {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'block';
+                loadUserData();
+                setInputToNow();
+            }, 500);
+        }
+    });
+
+    function logout() {
+        currentUser = null;
+        transactions = [];
+        lastVals = { inc: 0, exp: 0, bal: 0 }; // Reset counter
+        location.reload(); // Reload halaman untuk reset animasi bersih
+    }
+
+    // --- DATA LOGIC ---
+    function loadUserData() {
+        const storageKey = 'transactions_' + currentUser.toLowerCase(); 
+        transactions = JSON.parse(localStorage.getItem(storageKey)) || [];
+        initApp(true); // True = First Load (animasi stagger)
+    }
+
+    function updateLocalStorage() {
+        if (!currentUser) return;
+        const storageKey = 'transactions_' + currentUser.toLowerCase();
+        localStorage.setItem(storageKey, JSON.stringify(transactions));
+    }
+
+    function downloadExcel() {
+        if(transactions.length === 0) {
+            showToast("Kantong masih kosong! 💨");
+            return;
+        }
+        let csvContent = "Waktu,Jenis,Kategori,Keterangan,Jumlah\n";
+        const sortedTrx = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+        sortedTrx.forEach(t => {
+            const cleanText = t.text.replace(/,/g, " "); 
+            const jenis = t.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+            const formattedDate = t.date.replace('T', ' '); 
+            let row = `${formattedDate},${jenis},${t.category},${cleanText},${t.amount}`;
+            csvContent += row + "\n";
+        });
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Catatan_Doraemon_${currentUser}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // --- CORE APP ---
     function updateCategories() {
         const options = categoryOptions[typeDetails.value];
         categoryDetails.innerHTML = '';
@@ -262,10 +415,6 @@
             el.value = opt; el.innerText = opt;
             categoryDetails.appendChild(el);
         });
-    }
-
-    function formatRupiah(num) {
-        return 'Rp ' + num.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
     }
 
     function addTransaction(e) {
@@ -277,34 +426,68 @@
             text: textDetails.value,
             category: categoryDetails.value,
             amount: +amountDetails.value,
-            date: dateDetails.value,
+            date: dateDetails.value, 
             type: typeDetails.value
         };
 
         transactions.push(transaction);
         updateLocalStorage();
-        initApp();
+        
+        showToast("Tersimpan di kantong!"); // Munculkan notifikasi
+        initApp(false); // False = Jangan stagger semua, biar render ulang biasa
+        
         textDetails.value = ''; amountDetails.value = '';
+        setInputToNow();
     }
 
-    function removeTransaction(id) {
-        if(confirm('Hapus data ini?')) {
-            transactions = transactions.filter(t => t.id !== id);
-            updateLocalStorage();
-            initApp();
+    // Animasi Hapus yang Halus
+    function removeTransaction(id, btnElement) {
+        if(confirm('Yakin mau menghapus ini dari ingatan?')) {
+            // 1. Cari elemen baris (TR)
+            const row = btnElement.closest('tr');
+            
+            // 2. Tambahkan kelas animasi slide-out
+            row.classList.add('tr-deleting');
+
+            // 3. Tunggu animasi selesai (500ms) baru hapus data
+            setTimeout(() => {
+                transactions = transactions.filter(t => t.id !== id);
+                updateLocalStorage();
+                initApp(false); 
+                showToast("Data dihapus! 🗑️");
+            }, 500);
         }
     }
 
-    function renderList() {
+    function renderList(isFirstLoad) {
         listEl.innerHTML = '';
-        transactions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(trx => {
+        const sorted = transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        sorted.forEach((trx, index) => {
             const isInc = trx.type === 'income';
             const row = document.createElement('tr');
+            const dateDisplay = formatDateTime(trx.date);
+
+            // Tambahkan class animasi pop-in
+            row.classList.add('tr-anim');
+            
+            // Jika first load, beri delay bertingkat biar muncul satu per satu
+            if(isFirstLoad) {
+                row.style.animationDelay = `${index * 0.1}s`;
+            }
+
             row.innerHTML = `
-                <td>${trx.date}</td>
-                <td><span class="badge ${isInc ? 'bg-success' : 'bg-danger'}">${trx.category}</span> <br><small>${trx.text}</small></td>
-                <td class="text-end ${isInc ? 'text-success' : 'text-danger'}">${isInc ? '+' : '-'} ${formatRupiah(trx.amount)}</td>
-                <td class="text-center"><button class="btn btn-sm btn-outline-secondary" onclick="removeTransaction(${trx.id})">&times;</button></td>
+                <td class="ps-3"><small class="text-primary fw-bold">${dateDisplay}</small></td>
+                <td>
+                    <span class="badge ${isInc ? 'bg-primary' : 'bg-danger'} mb-1">${trx.category}</span>
+                    <div class="small text-muted">${trx.text}</div>
+                </td>
+                <td class="text-end fw-bold ${isInc ? 'text-success' : 'text-danger'}">
+                    ${isInc ? '+' : '-'} ${formatRupiahSimple(trx.amount)}
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle" onclick="removeTransaction(${trx.id}, this)">🗑️</button>
+                </td>
             `;
             listEl.appendChild(row);
         });
@@ -313,9 +496,15 @@
     function updateValues() {
         const inc = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
         const exp = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-        balanceEl.innerText = formatRupiah(inc - exp);
-        incomeEl.innerText = formatRupiah(inc);
-        expenseEl.innerText = formatRupiah(exp);
+        const bal = inc - exp;
+
+        // Panggil helper animasi angka
+        animateValue(incomeEl, lastVals.inc, inc, 1000, "Rp");
+        animateValue(expenseEl, lastVals.exp, exp, 1000, "Rp");
+        animateValue(balanceEl, lastVals.bal, bal, 1000, "Rp");
+
+        // Simpan nilai baru sebagai nilai lama untuk animasi berikutnya
+        lastVals = { inc, exp, bal };
     }
 
     function renderChart() {
@@ -334,16 +523,36 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Masuk', data: labels.map(m => monthlyData[m].inc), backgroundColor: '#198754' },
-                    { label: 'Keluar', data: labels.map(m => monthlyData[m].exp), backgroundColor: '#dc3545' }
+                    { 
+                        label: 'Masuk', 
+                        data: labels.map(m => monthlyData[m].inc), 
+                        backgroundColor: '#00a0e9',
+                        borderRadius: 8,
+                        barPercentage: 0.6
+                    },
+                    { 
+                        label: 'Keluar', 
+                        data: labels.map(m => monthlyData[m].exp), 
+                        backgroundColor: '#ea3622',
+                        borderRadius: 8,
+                        barPercentage: 0.6
+                    }
                 ]
             },
-            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            options: { 
+                responsive: true, 
+                animation: { duration: 1500, easing: 'easeOutQuart' }, // Animasi Chart diperlambat biar mulus
+                plugins: { legend: { labels: { font: { family: 'Fredoka' } } } },
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: '#e0f6ff' } },
+                    x: { grid: { display: false } }
+                } 
+            }
         });
     }
 
-    function initApp() {
-        renderList();
+    function initApp(isFirstLoad) {
+        renderList(isFirstLoad);
         updateValues();
         renderChart();
     }
