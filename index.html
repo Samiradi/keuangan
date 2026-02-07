@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Keuangan Multi-User</title>
+    <title>Manajemen Keuangan + Export Excel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -23,7 +23,7 @@
             align-items: center;
             z-index: 1000;
         }
-        #app-screen { display: none; } /* Sembunyikan aplikasi sebelum login */
+        #app-screen { display: none; } 
     </style>
 </head>
 <body>
@@ -45,7 +45,12 @@
 <div id="app-screen" class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>💰 Keuangan: <span id="user-display" class="text-primary"></span></h2>
-        <button onclick="logout()" class="btn btn-outline-danger btn-sm">Keluar</button>
+        <div>
+            <button onclick="downloadExcel()" class="btn btn-success me-2">
+                📥 Export Excel
+            </button>
+            <button onclick="logout()" class="btn btn-outline-danger">Keluar</button>
+        </div>
     </div>
 
     <div class="row mb-4 text-center">
@@ -168,14 +173,10 @@
         e.preventDefault();
         const username = usernameInput.value.trim();
         if(username) {
-            currentUser = username; // Set user aktif
+            currentUser = username;
             userDisplay.innerText = currentUser;
-            
-            // Sembunyikan login, munculkan app
             loginScreen.style.display = 'none';
             appScreen.style.display = 'block';
-            
-            // Load data khusus user ini
             loadUserData();
         }
     });
@@ -190,18 +191,51 @@
 
     // --- MANAJEMEN DATA ---
     function loadUserData() {
-        // KUNCI UTAMA: Kita membedakan nama penyimpanan berdasarkan user
-        // Contoh: 'transactions_Budi' atau 'transactions_Siti'
         const storageKey = 'transactions_' + currentUser.toLowerCase(); 
         transactions = JSON.parse(localStorage.getItem(storageKey)) || [];
-        
-        initApp(); // Jalankan aplikasi setelah data dimuat
+        initApp();
     }
 
     function updateLocalStorage() {
         if (!currentUser) return;
         const storageKey = 'transactions_' + currentUser.toLowerCase();
         localStorage.setItem(storageKey, JSON.stringify(transactions));
+    }
+
+    // --- FITUR BARU: EXPORT EXCEL (CSV) ---
+    function downloadExcel() {
+        if(transactions.length === 0) {
+            alert("Belum ada data transaksi untuk diexport!");
+            return;
+        }
+
+        // 1. Buat Header CSV
+        let csvContent = "Tanggal,Jenis,Kategori,Keterangan,Jumlah\n";
+
+        // 2. Masukkan Data baris per baris
+        transactions.forEach(t => {
+            // Kita bersihkan koma di dalam teks agar tidak merusak kolom CSV
+            const cleanText = t.text.replace(/,/g, " "); 
+            const jenis = t.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+            
+            // Format baris: Tanggal, Jenis, Kategori, Keterangan, Jumlah (angka mentah)
+            let row = `${t.date},${jenis},${t.category},${cleanText},${t.amount}`;
+            csvContent += row + "\n";
+        });
+
+        // 3. Buat file Blob dan Download
+        // \uFEFF adalah BOM untuk memastikan Excel membaca karakter dengan benar
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        // Nama file: Laporan_Budi_Tanggal.csv
+        link.setAttribute("download", `Laporan_Keuangan_${currentUser}_${new Date().toISOString().slice(0,10)}.csv`);
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     // --- LOGIKA APLIKASI KEUANGAN ---
@@ -212,7 +246,6 @@
     const form = document.getElementById('form-transaksi');
     const ctx = document.getElementById('financeChart').getContext('2d');
     
-    // Form Inputs
     const textDetails = document.getElementById('text');
     const amountDetails = document.getElementById('amount');
     const dateDetails = document.getElementById('date');
